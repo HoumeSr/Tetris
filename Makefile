@@ -3,11 +3,12 @@ flags=-Wall -Werror -Wextra
 files=tetris.cpp figures/shapes.cpp figures/shape_template.cpp
 target=tetris
 
-all:
+all: comp clean
+
+comp:
 	clear
 	$(CC) $(flags) $(files) -o $(target)
 	./$(target)
 
-
-$(TARGET):
-	$(CC) $(flags) $(files) -o $(target)
+clean:
+	rm -f $(target)
