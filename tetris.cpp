@@ -1,5 +1,6 @@
 #include "tetris.h"
 using namespace std;
+
 vector<vector<int>> create_map(int height, int weight)
 {
     vector<vector<int>> map(height, vector<int>(weight));
@@ -8,6 +9,7 @@ vector<vector<int>> create_map(int height, int weight)
             map[i][j] = 0;
     return map;
 }
+
 void print_map(vector<vector<int>> *map, int size)
 {
     if (map == nullptr || (*map).size() == 0)
@@ -24,7 +26,7 @@ void print_map(vector<vector<int>> *map, int size)
                 print_char((*map)[i][k], size);
             }
             print_char(-1, size);
-            cout << endl;
+            printw("\n");
         }
     }
 
@@ -32,9 +34,10 @@ void print_map(vector<vector<int>> *map, int size)
     {
         for (int j = 0; j < weight + 2; j++)
             print_char(-1, size);
-        cout << endl;
+        printw("\n");
     }
-    cout << endl;
+    printw("\n");
+    refresh();
 }
 
 void print_char(int _char, int size)
@@ -42,11 +45,19 @@ void print_char(int _char, int size)
     for (int i = 0; i < size; i++)
     {
         if (_char == -1)
-            cout << '#';
+        {
+            attron(COLOR_PAIR(1));
+            printw("#");
+            attroff(COLOR_PAIR(1));
+        }
         else if (_char == 0)
-            cout << '0';
-        else if (_char == 1)
-            cout << '*';
+            printw(" ");
+        else
+        {
+            attron(COLOR_PAIR(_char));
+            printw("*");
+            attroff(COLOR_PAIR(_char));
+        }
     }
 }
 
@@ -65,7 +76,6 @@ void processing_line(vector<vector<int>> *map)
         {
             for (int k = 0; k < weight; k++)
             {
-                // cout << j << ' ' << k << endl;
                 (*map)[j][k] = (*map)[j - 1][k];
             }
         }
@@ -73,10 +83,39 @@ void processing_line(vector<vector<int>> *map)
             (*map)[0][j] = 0;
     }
 }
+void reg_movement(unique_ptr<Template> *currentFigure, vector<vector<int>> *map)
+{
+    int ch = getch();
+    double speed = 0.0005;
+    if (ch == 'd')
+    {
+        (*currentFigure)->move_right(map);
+        if ((*currentFigure)->check_position(map))
+            (*currentFigure)->move_left(map);
+    }
+    else if (ch == 'a')
+    {
+        (*currentFigure)->move_left(map);
+        if ((*currentFigure)->check_position(map))
+            (*currentFigure)->move_right(map);
+    }
+    else if (ch == 'w')
+    {
+        (*currentFigure)->rotate();
+        if ((*currentFigure)->check_position(map))
+            for (int i = 0; i < 3; ++i)
+                (*currentFigure)->rotate();
+    }
+    else if (ch == 's')
+    {
+        while (not(*currentFigure)->check_stop_move(map))
+            (*currentFigure)->move_down(map, speed);
+    }
+    (*currentFigure)->move_down(map, speed);
+}
 void create_figure(unique_ptr<Template> *figure, struct coordinates cord)
 {
     int type = rand() % 7;
-    cout << type << endl;
     if (type == 0)
         *figure = unique_ptr<Template>(new T_shape(cord));
     else if (type == 1)
@@ -92,46 +131,69 @@ void create_figure(unique_ptr<Template> *figure, struct coordinates cord)
     else if (type == 6)
         *figure = unique_ptr<Template>(new Z_shape(cord));
 }
-
-void tetris()
+void init_tetris()
 {
+    initscr();
+    cbreak();
+    noecho();
+    nodelay(stdscr, TRUE);
     srand(time(0));
-    vector<vector<int>> map = create_map(20, 10);
-    int size = 2;
+    start_color();
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(4, COLOR_BLUE, COLOR_BLACK);
+    init_pair(5, COLOR_WHITE, COLOR_BLACK);
+    init_pair(6, COLOR_CYAN, COLOR_BLACK);
+    init_pair(7, COLOR_MAGENTA, COLOR_BLACK);
+}
+int random_color()
+{
+    return rand() % 6 + 2;
+}
+unique_ptr<Template> init_figure(vector<vector<int>> *map, int color)
+{
     unique_ptr<Template> currentFigure;
-    struct coordinates cord = {0, 0};
+    struct coordinates cord = {0, 5};
     create_figure(&currentFigure, cord);
-    char ch;
-    currentFigure->enter_shape(&map, 1);
+    currentFigure->enter_shape(map, color);
+    return currentFigure;
+}
+int state_loss(vector<vector<int>> *map)
+{
+    int width = (*map)[0].size();
+    for (int i = 0; i < width; ++i)
+        if ((*map)[0][i])
+            return 1;
+    return 0;
+}
+int tetris()
+{
+    init_tetris();
+    vector<vector<int>> map = create_map(20, 10);
+    int size = 1;
+    int color = random_color();
+    unique_ptr<Template> currentFigure = init_figure(&map, color);
     print_map(&map, size);
-    while (cin >> ch)
+    int loss = 0;
+    while (loss == 0)
     {
         currentFigure->enter_shape(&map, 0);
-        if (ch == 'd')
-        {
-            currentFigure->move_right(&map);
-        }
-        else if (ch == 'a')
-        {
-            currentFigure->move_left(&map);
-        }
-        else if (ch == 's')
-        {
-            currentFigure->move_down(&map, 1);
-        }
-        else if (ch == 'w')
-        {
-            currentFigure->rotate();
-        }
+        reg_movement(&currentFigure, &map);
         if (currentFigure->check_stop_move(&map))
         {
-            currentFigure->enter_shape(&map, 1);
+            loss = currentFigure->enter_shape(&map, color);
             processing_line(&map);
-            create_figure(&currentFigure, {0, 0});
+            create_figure(&currentFigure, {0, 5});
+            color = random_color();
         }
-        currentFigure->enter_shape(&map, 1);
+        clear();
+        loss = currentFigure->enter_shape(&map, color);
         print_map(&map, size);
+        sleep(0.7);
     }
+    endwin();
+    return 0;
 }
 int main()
 {

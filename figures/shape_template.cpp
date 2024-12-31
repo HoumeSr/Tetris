@@ -2,7 +2,7 @@
 #include <vector>
 #include <iostream>
 using namespace std;
-coordinates::coordinates(int x = 0, int y = 0)
+coordinates::coordinates(double x = 0, double y = 0)
 {
     this->x = x;
     this->y = y;
@@ -52,44 +52,64 @@ bool Template::check_stop_move(vector<vector<int>> *map)
         {
             if (render[i][j] == 0)
                 continue;
-            if (pos.y + i + 1 == height)
+            if ((int)pos.y + i + 1 == height)
                 return true;
-            if ((*map)[pos.y + i + 1][pos.x + j] == 1)
+            if ((*map)[(int)pos.y + i + 1][(int)pos.x + j] > 0)
                 return true;
         }
     }
     return false;
 }
-
-void Template::move_down(vector<vector<int>> *map, int speed)
+bool Template::check_position(vector<vector<int>> *map)
+{
+    int width = (*map)[0].size();
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            if (render[i][j] > 0)
+            {
+                if ((int)pos.x + j >= width || (int)pos.x + j < 0)
+                    return 1;
+                if ((*map)[(int)pos.y + i][(int)pos.x + j] > 0)
+                {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+void Template::move_down(vector<vector<int>> *map, double speed)
 {
     if (check_stop_move(map) == 0)
     {
         pos.y += speed;
     }
 }
-void Template::move_left(vector<vector<int>> *map)
+int Template::move_left(vector<vector<int>> *map)
 {
     if (map == nullptr || (*map).size() == 0)
-        return;
+        return 0;
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
         {
             if (render[i][j] == 0)
                 continue;
-            if (pos.x + j == 0)
-                return;
-            if ((*map)[i][pos.x + j - 1] == 1)
-                return;
+            if ((int)pos.x + j == 0)
+                return 0;
+            if ((*map)[i][(int)pos.x + j - 1] > 0)
+                return 0;
         }
     }
     pos.x -= 1;
+    return 1;
 }
-void Template::move_right(vector<vector<int>> *map)
+int Template::move_right(vector<vector<int>> *map)
 {
     if (map == nullptr || (*map).size() == 0)
-        return;
+        return 0;
     int weight = (int)(*map)[0].size();
     for (int i = 0; i < size; i++)
     {
@@ -97,25 +117,30 @@ void Template::move_right(vector<vector<int>> *map)
         {
             if (render[i][j] == 0)
                 continue;
-            if (pos.x + j + 1 == weight)
-                return;
-            if ((*map)[i][pos.x + j + 1] == 1)
-                return;
+            if ((int)pos.x + j + 1 == weight)
+                return 0;
+            if ((*map)[i][(int)pos.x + j + 1] > 0)
+                return 0;
         }
     }
     pos.x += 1;
+    return 1;
 }
-void Template::enter_shape(vector<vector<int>> *map, int type)
+int Template::enter_shape(vector<vector<int>> *map, int type)
 {
+    int status = 0;
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
         {
             if (render[i][j] == 0)
                 continue;
-            (*map)[pos.y + i][pos.x + j] = type;
+            if (type == 1 && (*map)[(int)pos.y + i][(int)pos.x + j] > 0)
+                status = 1;
+            (*map)[(int)pos.y + i][(int)pos.x + j] = type;
         }
     }
+    return status;
 }
 Template::~Template()
 {

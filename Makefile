@@ -7,7 +7,7 @@ all: comp clean
 
 comp:
 	clear
-	$(CC) $(flags) $(files) -o $(target)
+	$(CC) $(flags) $(files) -o $(target) -lncurses
 	./$(target)
 
 clean:
