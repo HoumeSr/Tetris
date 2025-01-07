@@ -128,19 +128,18 @@ int Template::move_right(vector<vector<int>> *map)
 }
 int Template::enter_shape(vector<vector<int>> *map, int type)
 {
-    int status = 0;
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
         {
             if (render[i][j] == 0)
                 continue;
-            if (type == 1 && (*map)[(int)pos.y + i][(int)pos.x + j] > 0)
-                status = 1;
+            if (type > 0 && (*map)[(int)pos.y + i][(int)pos.x + j] > 0)
+                return 1;
             (*map)[(int)pos.y + i][(int)pos.x + j] = type;
         }
     }
-    return status;
+    return 0;
 }
 Template::~Template()
 {

@@ -47,15 +47,15 @@ void print_char(int _char, int size)
         if (_char == -1)
         {
             attron(COLOR_PAIR(1));
-            printw("#");
+            printw(" #");
             attroff(COLOR_PAIR(1));
         }
         else if (_char == 0)
-            printw(" ");
+            printw("  ");
         else
         {
             attron(COLOR_PAIR(_char));
-            printw("*");
+            printw(" *");
             attroff(COLOR_PAIR(_char));
         }
     }
@@ -86,7 +86,7 @@ void processing_line(vector<vector<int>> *map)
 void reg_movement(unique_ptr<Template> *currentFigure, vector<vector<int>> *map)
 {
     int ch = getch();
-    double speed = 0.0005;
+    double speed = 0.2;
     if (ch == 'd')
     {
         (*currentFigure)->move_right(map);
@@ -154,7 +154,7 @@ int random_color()
 unique_ptr<Template> init_figure(vector<vector<int>> *map, int color)
 {
     unique_ptr<Template> currentFigure;
-    struct coordinates cord = {0, 5};
+    struct coordinates cord = {5, 0};
     create_figure(&currentFigure, cord);
     currentFigure->enter_shape(map, color);
     return currentFigure;
@@ -171,7 +171,7 @@ int tetris()
 {
     init_tetris();
     vector<vector<int>> map = create_map(20, 10);
-    int size = 1;
+    int size = 2;
     int color = random_color();
     unique_ptr<Template> currentFigure = init_figure(&map, color);
     print_map(&map, size);
@@ -184,13 +184,13 @@ int tetris()
         {
             loss = currentFigure->enter_shape(&map, color);
             processing_line(&map);
-            create_figure(&currentFigure, {0, 5});
+            create_figure(&currentFigure, {5, 0});
             color = random_color();
         }
         clear();
         loss = currentFigure->enter_shape(&map, color);
         print_map(&map, size);
-        sleep(0.7);
+        usleep(80000);
     }
     endwin();
     return 0;
